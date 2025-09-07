@@ -1,61 +1,101 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
     background-color: #f0f8ff;
-    direction: rtl;
+    color: #333;
+    -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
 }
 
 #app {
+    width: 90vw;
+    max-width: 800px;
     text-align: center;
+    padding: 20px;
 }
 
-#card {
-    background-color: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    padding: 20px;
-    cursor: pointer;
-    width: 80vw;
-    height: 60vh;
-    max-width: 400px;
-    max-height: 400px;
+#prompt-text {
+    font-size: clamp(1.5em, 5vw, 2.5em); /* Responsive font size */
+    margin-bottom: 40px;
+    min-height: 80px; /* Reserve space to avoid layout shifts */
+    font-weight: bold;
+    color: #005a9c;
+}
+
+#choices-container {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(15px, 4vw, 30px); /* Responsive gap */
+}
+
+.choice-card {
+    background-color: white;
+    border: 3px solid transparent;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    padding: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    width: clamp(120px, 25vw, 180px); /* Responsive card size */
+    height: clamp(120px, 25vw, 180px);
+    display: flex;
     justify-content: center;
     align-items: center;
 }
 
-#card-image {
+.choice-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.choice-card:active {
+    transform: scale(0.98);
+    border-color: #4CAF50;
+}
+
+.choice-card img {
     max-width: 100%;
-    max-height: 80%;
+    max-height: 100%;
     object-fit: contain;
+    pointer-events: none; /* Make sure the image doesn't capture click events */
 }
 
-#card-word {
-    font-size: 2em;
-    margin-top: 20px;
-    color: #333;
+/* Feedback Overlay Styles */
+#feedback-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
 }
 
-#navigation {
-    margin-top: 20px;
+#feedback-overlay.visible {
+    opacity: 1;
+    visibility: visible;
 }
 
-button {
-    font-size: 1.5em;
-    padding: 10px 20px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 10px;
-    background-color: #4CAF50;
+#feedback-text {
+    font-size: clamp(8em, 20vw, 12em); /* Responsive emoji size */
     color: white;
-    cursor: pointer;
+    text-shadow: 0 0 20px rgba(0,0,0,0.5);
+    transform: scale(0.5);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.2s;
 }
 
-button:hover {
-    background-color: #45a049;
+#feedback-overlay.visible #feedback-text {
+    transform: scale(1);
+    opacity: 1;
 }

@@ -8,13 +8,12 @@
 </head>
 <body>
     <div id="app">
-        <div id="card">
-            <img id="card-image" src="" alt="לחץ על התמונה לשמוע את המילה">
-            <p id="card-word"></p>
+        <h1 id="prompt-text">?</h1>
+        <div id="choices-container">
+            <!-- Image choices will be dynamically generated here by JavaScript -->
         </div>
-        <div id="navigation">
-            <button id="prev-btn">הקודם</button>
-            <button id="next-btn">הבא</button>
+        <div id="feedback-overlay">
+            <span id="feedback-text"></span>
         </div>
     </div>
     <script src="script.js"></script>

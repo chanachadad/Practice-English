@@ -1,73 +1,112 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Get references to all the necessary DOM elements
-    const cardImage = document.getElementById('card-image');
-    const cardWord = document.getElementById('card-word');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const card = document.getElementById('card');
+    // --- DOM Elements ---
+    const promptText = document.getElementById('prompt-text');
+    const choicesContainer = document.getElementById('choices-container');
+    const feedbackOverlay = document.getElementById('feedback-overlay');
+    const feedbackText = document.getElementById('feedback-text');
 
-    // Data for the flashcards.
-    // Image URLs will be added in the next step.
-    const wordsData = [
-        { word: 'Dog', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076928.png' },
-        { word: 'Cat', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076934.png' },
-        { word: 'Bird', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076926.png' },
-        { word: 'Fish', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076937.png' },
-        { word: 'Lion', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076943.png' },
-        { word: 'Monkey', image: 'https://cdn-icons-png.flaticon.com/512/1076/1076946.png' }
-    ];
+    // --- Game Data ---
+    const vocabulary = {
+        'Dog': 'https://cdn-icons-png.flaticon.com/512/1076/1076928.png',
+        'Cat': 'https://cdn-icons-png.flaticon.com/512/1076/1076934.png',
+        'Bird': 'https://cdn-icons-png.flaticon.com/512/1076/1076926.png',
+        'Fish': 'https://cdn-icons-png.flaticon.com/512/1076/1076937.png',
+        'Lion': 'https://cdn-icons-png.flaticon.com/512/1076/1076943.png',
+        'Monkey': 'https://cdn-icons-png.flaticon.com/512/1076/1076946.png',
+        'Elephant': 'https://cdn-icons-png.flaticon.com/512/1076/1076935.png',
+        'Bear': 'https://cdn-icons-png.flaticon.com/512/1076/1076925.png'
+    };
+    const words = Object.keys(vocabulary);
+    let currentCorrectAnswer = '';
+    let isRoundInProgress = true;
 
-    let currentIndex = 0;
+    // --- Core Functions ---
 
-    // Function to speak a given text using the browser's speech synthesis
-    function speak(text) {
-        // Stop any currently playing speech
+    function speak(text, lang = 'en-US') {
         window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US'; // Set the language to English
-        utterance.rate = 0.9; // Slightly slower for clarity
-
+        utterance.lang = lang;
+        utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
     }
 
-    // Function to update the card display with the current word and image
-    function showCard() {
-        const currentWord = wordsData[currentIndex];
-        cardImage.src = currentWord.image;
-        cardImage.alt = currentWord.word;
-
-        // We can display the word for the parent, or hide it.
-        // For now, we'll show it.
-        cardWord.textContent = currentWord.word;
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     }
 
-    // --- Event Listeners ---
+    function startNewRound() {
+        isRoundInProgress = true;
+        choicesContainer.innerHTML = ''; // Clear previous choices
+        promptText.textContent = ''; // Clear previous prompt
 
-    // Go to the next card
-    nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent card click event from firing
-        currentIndex = (currentIndex + 1) % wordsData.length; // Loop back to the start if at the end
-        showCard();
-    });
+        // 1. Pick a correct answer
+        const shuffledWords = shuffleArray([...words]);
+        currentCorrectAnswer = shuffledWords[0];
 
-    // Go to the previous card
-    prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent card click event from firing
-        currentIndex = (currentIndex - 1 + wordsData.length) % wordsData.length; // Loop back to the end if at the start
-        showCard();
-    });
+        // 2. Pick incorrect choices (distractors)
+        const distractors = shuffledWords.slice(1, 3); // Get 2 distractors
+        const choices = shuffleArray([currentCorrectAnswer, ...distractors]);
 
-    // Speak the word when the card (image area) is clicked
-    card.addEventListener('click', () => {
-        // Make sure there's a word to speak before trying
-        if (wordsData[currentIndex] && wordsData[currentIndex].word) {
-            speak(wordsData[currentIndex].word);
+        // 3. Ask the question
+        const question = `Where is the ${currentCorrectAnswer}?`;
+        promptText.textContent = question; // Display for parent
+        speak(question);
+
+        // 4. Display choices
+        choices.forEach(word => {
+            const card = document.createElement('div');
+            card.className = 'choice-card';
+            card.dataset.word = word; // Store the word in a data attribute
+
+            const img = document.createElement('img');
+            img.src = vocabulary[word];
+            img.alt = word;
+            card.appendChild(img);
+
+            card.addEventListener('click', handleChoice);
+            choicesContainer.appendChild(card);
+        });
+    }
+
+    function handleChoice(event) {
+        if (!isRoundInProgress) return; // Prevent multiple clicks after a choice is made
+
+        const clickedWord = event.currentTarget.dataset.word;
+        const isCorrect = clickedWord === currentCorrectAnswer;
+        isRoundInProgress = false; // Lock the round
+
+        showFeedback(isCorrect, clickedWord);
+    }
+
+    function showFeedback(isCorrect, clickedWord) {
+        feedbackText.textContent = isCorrect ? '✅' : '❌';
+        feedbackOverlay.classList.add('visible');
+
+        if (isCorrect) {
+            speak('Well done!');
+            // Wait, then start the next round
+            setTimeout(() => {
+                feedbackOverlay.classList.remove('visible');
+                startNewRound();
+            }, 1500);
+        } else {
+            speak(`That's a ${clickedWord}. Try again!`);
+            // Wait, then hide feedback and allow another try
+            setTimeout(() => {
+                feedbackOverlay.classList.remove('visible');
+                isRoundInProgress = true; // Unlock the round for another try
+            }, 1500);
         }
-    });
+    }
 
-    // --- Initial Setup ---
-
-    // Display the first card when the page loads
-    showCard();
+    // --- Initializer ---
+    // A brief welcome and instruction
+    setTimeout(() => {
+        speak('Let\'s play a game!');
+        startNewRound();
+    }, 500);
 });
